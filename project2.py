@@ -37,16 +37,20 @@ class graph():
             while num2 == num: # repeatedly rerolls second random number if it's the same as first
                 num2 = random.randrange(40)
 
-            if graph[num].edge3 == -1:
+            # checks if nodes are already connected
+            if graph[num].edge1 == graph[num2] or graph[num].edge2 == graph[num2]:
+                continue
+
+            # checks if edge3 is empty
+            if graph[num].edge3 == -1 and graph[num2].edge3 == -1:
                 graph[num].edge3 = graph[num2]
                 graph[num2].edge3 = graph[num]
             else:
-                i = i - 1
+                continue
 
             i = i + 1
         return graph
-
-def debugprint(graph, agent, target):
+def debugprintfull(graph, agent, target):
     for x in graph:
 
         print("Node:", x.num)
@@ -70,6 +74,57 @@ def debugprint(graph, agent, target):
             print("(AGENT HERE!!!)")
 
         print("")
+
+def debugprint(graph, agent, target):
+    #for x in graph:
+
+    x = agent.node
+
+    print("Node:", x.num)
+
+    if x.edge1 != -1:
+        print("Edge 1:", x.edge1.num)
+    else:
+        print("Edge 1: n/a")
+    if x.edge2 != -1:
+        print("Edge 2:", x.edge2.num)
+    else:
+        print("Edge 2: n/a")
+    if x.edge3 != -1:
+        print("Edge 3:", x.edge3.num)
+    else:
+        print("Edge 3: n/a")
+
+    if target.node == x:
+        print("(TARGET HERE!!!)")
+    if agent.node == x:
+        print("(AGENT HERE!!!)")
+
+    print("")
+
+    x = target.node
+
+    print("Node:", x.num)
+
+    if x.edge1 != -1:
+        print("Edge 1:", x.edge1.num)
+    else:
+        print("Edge 1: n/a")
+    if x.edge2 != -1:
+        print("Edge 2:", x.edge2.num)
+    else:
+        print("Edge 2: n/a")
+    if x.edge3 != -1:
+        print("Edge 3:", x.edge3.num)
+    else:
+        print("Edge 3: n/a")
+
+    if target.node == x:
+        print("(TARGET HERE!!!)")
+    if agent.node == x:
+        print("(AGENT HERE!!!)")
+
+    print("")
 class agent():
     def __init__(self, graph):
         self.node = graph[random.randrange(0,40)]        # target is initialized/starts at random node
@@ -85,13 +140,11 @@ class agent():
                 self.node = self.node.edge2
             else:
                 self.node = self.node.edge3
-        elif self.node.edge2 != -1:     # 2 edges
+        else:
             if random.randrange(0,2):
                 self.node = self.node.edge1
             else:
                 self.node = self.node.edge2
-        else:                           # 1 edge
-            self.node = self.node.edge1
         
         return
 
@@ -173,6 +226,8 @@ def agent1():
     while steps < 999:
         
         #debugprint(newgraph, newagent, newtarget)
+        #print("------------------------------------------")
+
         newtarget.walk()
 
         if checkvictory(newagent, newtarget):
@@ -182,6 +237,8 @@ def agent1():
         newagent.followpath(path)
         steps = steps + 1
 
+        if checkvictory(newagent, newtarget):
+            break
         
         
     #debugprint(newgraph, newagent, newtarget)
@@ -190,6 +247,8 @@ def agent1():
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
     
+    print("Iterations:", tries)
+
     # AGENT 0
     avg = 0     # the average number of steps taken for each agent
     
@@ -215,7 +274,6 @@ def printagent(agent, tries, avg, starttime):
     
     timetaken = time.clock_gettime(time.CLOCK_REALTIME) - starttime
 
-    print("Iterations:", tries)
     print("")
     print("Agent",agent)
     print(avg, "steps on average")
@@ -229,6 +287,9 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    runagents(1000)
+    new = graph.construct()
+    debugprintfull(new, agent(new), agent(new))
+    
+    #runagents(100)
 
 main()
