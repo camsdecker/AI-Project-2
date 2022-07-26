@@ -147,18 +147,16 @@ def checkvictory(agent,target):
 def agent0():
 
     steps = 0       # number of steps it's taken to reach the target
-    victory = 0     # whether the agent has reached the target
     
     newgraph = graph.construct()
     newagent = agent(newgraph)
     newtarget = agent(newgraph)
 
-    while not victory:
-
+    while 1:    # loops until victory
         #debugprint(newgraph, newagent, newtarget)
-
+        if checkvictory(newagent, newtarget):
+            break
         newtarget.walk()
-        victory = checkvictory(newagent, newtarget)
         steps = steps + 1
     #debugprint(newgraph, newagent, newtarget)
     return steps
@@ -166,25 +164,32 @@ def agent0():
 def agent1():
 
     steps = 0       # number of steps it's taken to reach the target
-    victory = 0     # whether the agent has reached the target
     
     newgraph = graph.construct()
     newagent = agent(newgraph)
     newtarget = agent(newgraph)
 
-    while not victory:
-
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
+        
         #debugprint(newgraph, newagent, newtarget)
+        newtarget.walk()
+
+        if checkvictory(newagent, newtarget):
+            break
+
         path = shortestpath(newagent.node, newtarget.node)
         newagent.followpath(path)
-        newtarget.walk()
-        victory = checkvictory(newagent, newtarget)
         steps = steps + 1
+
+        
+        
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
+    
     # AGENT 0
     avg = 0     # the average number of steps taken for each agent
     
@@ -224,6 +229,6 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    runagents(1)
+    runagents(1000)
 
 main()
