@@ -70,7 +70,7 @@ def debugprint(graph, agent, target):
             print("(AGENT HERE!!!)")
 
         print("")
-class target():
+class agent():
     def __init__(self, graph):
         self.node = graph[random.randrange(0,40)]        # target is initialized/starts at random node
 
@@ -95,6 +95,16 @@ class target():
         
         return
 
+    # moves the agent one step along the path
+    # returns 1 if successful, 0 if not
+    def followpath(self, path):
+        next = path.pop(0)
+
+        if next == self.node.edge1 or next == self.node.edge2 or next == self.node.edge3:
+            self.node = next
+            return 1
+        return 0
+
 # finds the shortest path from the agent's node (S) to the target's node (G)
 def shortestpath(S, G):
     #starttime = time.clock_gettime(time.CLOCK_REALTIME)
@@ -108,6 +118,7 @@ def shortestpath(S, G):
             continue
         if current == G:
             #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (success)")
+            path.pop(0)
             return path
         else:
             newpath = list(path)
@@ -139,8 +150,8 @@ def agent0():
     victory = 0     # whether the agent has reached the target
     
     newgraph = graph.construct()
-    newagent = target(newgraph)
-    newtarget = target(newgraph)
+    newagent = agent(newgraph)
+    newtarget = agent(newgraph)
 
     while not victory:
 
@@ -152,9 +163,29 @@ def agent0():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
+def agent1():
+
+    steps = 0       # number of steps it's taken to reach the target
+    victory = 0     # whether the agent has reached the target
+    
+    newgraph = graph.construct()
+    newagent = agent(newgraph)
+    newtarget = agent(newgraph)
+
+    while not victory:
+
+        #debugprint(newgraph, newagent, newtarget)
+        path = shortestpath(newagent.node, newtarget.node)
+        newagent.followpath(path)
+        newtarget.walk()
+        victory = checkvictory(newagent, newtarget)
+        steps = steps + 1
+    #debugprint(newgraph, newagent, newtarget)
+    return steps
+
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
-
+    # AGENT 0
     avg = 0     # the average number of steps taken for each agent
     
     starttime = time.clock_gettime(time.CLOCK_REALTIME)
@@ -163,6 +194,16 @@ def runagents(tries):
     avg = avg / tries
 
     printagent(0, tries, avg, starttime)
+
+    # AGENT 1
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent1()
+    avg = avg / tries
+
+    printagent(1, tries, avg, starttime)
 
     
 def printagent(agent, tries, avg, starttime):
@@ -183,14 +224,6 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    newgraph = graph.construct()
-    newagent = target(newgraph)
-    newtarget = target(newgraph)
-    path = shortestpath(newagent.node,newtarget.node)
-    debugprint(newgraph, newagent, newtarget)
-    for x in path:
-        print(x.num)
-
-    #runagents(100)
+    runagents(1)
 
 main()
