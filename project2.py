@@ -23,8 +23,11 @@ class graph():
         for i in range(40):
             graph.append(node())
             graph[i].num = i
-            graph[i-1].edge1 = graph[i]
-        graph[39].edge1 = graph[0]
+            graph[i].edge1 = graph[i-1]
+            graph[i-1].edge2 = graph[i]
+        graph[39].edge1 = graph[38]
+        graph[39].edge2 = graph[0]
+        graph[0].edge1 = graph[39]
         
         i = 0
 
@@ -34,10 +37,9 @@ class graph():
             while num2 == num: # repeatedly rerolls second random number if it's the same as first
                 num2 = random.randrange(40)
 
-            if graph[num].edge2 == -1:
-                graph[num].edge2 = graph[num2]
-            elif graph[num].edge3 == -1:
+            if graph[num].edge3 == -1:
                 graph[num].edge3 = graph[num2]
+                graph[num2].edge3 = graph[num]
             else:
                 i = i - 1
 
@@ -93,12 +95,44 @@ class target():
         
         return
 
+# finds the shortest path from the agent's node (S) to the target's node (G)
+def shortestpath(S, G):
+    #starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    fringe = []
+    closed = []
+    fringe.append([S])
+    while len(fringe) > 0:
+        path = fringe.pop(0)
+        current = path[-1]
+        if current in closed:
+            continue
+        if current == G:
+            #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (success)")
+            return path
+        else:
+            newpath = list(path)
+            newpath.append(current.edge1)
+            fringe.append(newpath)
+            if current.edge2 != -1:
+                newpath = list(path)
+                newpath.append(current.edge2)
+                fringe.append(newpath)
+                if current.edge3 != -1:
+                    newpath = list(path)
+                    newpath.append(current.edge3)
+                    fringe.append(newpath)
+            
+            closed.append(current)
+    #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (fail)")
+    return 0
+
 # checks if the agent is in the same node as the target and returns 1 if victorious and 0 if not
 def checkvictory(agent,target):
     if agent.node == target.node:
         return 1
     return 0
 
+# runs agent 0 and returns the number of steps it took to achieve victory
 def agent0():
 
     steps = 0       # number of steps it's taken to reach the target
@@ -110,13 +144,38 @@ def agent0():
 
     while not victory:
 
-        debugprint(newgraph, newagent, newtarget)
+        #debugprint(newgraph, newagent, newtarget)
 
         newtarget.walk()
         victory = checkvictory(newagent, newtarget)
         steps = steps + 1
-    debugprint(newgraph, newagent, newtarget)
+    #debugprint(newgraph, newagent, newtarget)
     return steps
+
+# runs each agent and averages the number of steps it took to reach victory with a sample size of tries
+def runagents(tries):
+
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent0()
+    avg = avg / tries
+
+    printagent(0, tries, avg, starttime)
+
+    
+def printagent(agent, tries, avg, starttime):
+    
+    timetaken = time.clock_gettime(time.CLOCK_REALTIME) - starttime
+
+    print("Iterations:", tries)
+    print("")
+    print("Agent",agent)
+    print(avg, "steps on average")
+    #print("Total time:", timetaken, "seconds")
+    print("Average time:", timetaken/tries, "seconds/iteration")
+    print("")
 
 def main():
 
@@ -124,5 +183,14 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    agent0()
+    newgraph = graph.construct()
+    newagent = target(newgraph)
+    newtarget = target(newgraph)
+    path = shortestpath(newagent.node,newtarget.node)
+    debugprint(newgraph, newagent, newtarget)
+    for x in path:
+        print(x.num)
+
+    #runagents(100)
+
 main()
