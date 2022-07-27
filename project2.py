@@ -191,7 +191,8 @@ def shortestpath(S, G):
     return 0
 
 # checks if the agent is in the same node as the target and returns 1 if victorious and 0 if not
-def checkvictory(agent,target):
+# maybe unnecessary but makes the code easier to read imo
+def victory(agent,target):
     if agent.node == target.node:
         return 1
     return 0
@@ -208,7 +209,7 @@ def agent0():
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
         #debugprint(newgraph, newagent, newtarget)
-        if checkvictory(newagent, newtarget):
+        if victory(newagent, newtarget):
             break
         newtarget.walk()
         steps = steps + 1
@@ -232,14 +233,14 @@ def agent1():
 
         newtarget.walk()
 
-        if checkvictory(newagent, newtarget):
+        if victory(newagent, newtarget):
             break
 
         path = shortestpath(newagent.node, newtarget.node)
         newagent.followpath(path)
         steps = steps + 1
 
-        if checkvictory(newagent, newtarget):
+        if victory(newagent, newtarget):
             break
         
         
@@ -247,6 +248,7 @@ def agent1():
     return steps
 
 # same as agent 1, except it moves to the closest space that the target can move to next
+# this is unless the target is 1 space away, in which case the agent just moves right to it
 def agent2():
 
     steps = 0       # number of steps it's taken to reach the target
@@ -263,10 +265,10 @@ def agent2():
 
         newtarget.walk()
 
-        if checkvictory(newagent, newtarget):
+        if victory(newagent, newtarget):
             break
         
-        path = shortestpath(newagent.node, newtarget.node.edge1)
+        path = shortestpath(newagent.node, newtarget.node.edge1)    # this is where we find the closest space that the target may move to next turn...
 
         path2 = shortestpath(newagent.node, newtarget.node.edge2)
         if len(path2) < len(path):
@@ -275,14 +277,16 @@ def agent2():
         if newtarget.node.edge3 != -1:
             path3 = shortestpath(newagent.node, newtarget.node.edge3)
             if len(path3) < len(path):
-                path = path3
+                path = path3                                        
+
+        if len(path) == 0:
+            path = shortestpath(newagent.node, newtarget.node)      # if the agent is one space away from the target, it just moves directly to it to win
 
         newagent.followpath(path)
         steps = steps + 1
 
-        if checkvictory(newagent, newtarget):
+        if victory(newagent, newtarget):
             break
-        
         
     #debugprint(newgraph, newagent, newtarget)
     return steps
@@ -340,6 +344,6 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
     
-    runagents(1000)
+    runagents(10000)
 
 main()
