@@ -4,15 +4,12 @@ import math
 import time
 import copy
 import numpy
-
 class node(object):
     def __init__(self):
         self.num = -1
         self.edge1 = -1
         self.edge2 = -1
         self.edge3 = -1
-
-# returns a new graph
 class graph():
 
     # constructs a playing field for the agents and target
@@ -50,6 +47,39 @@ class graph():
 
             i = i + 1
         return graph
+class agent():
+    def __init__(self, graph):
+        self.node = graph[random.randrange(0,40)]        # target is initialized/starts at random node
+
+    # randomly moves the target to a different neighboring node
+    def walk(self):
+        # finds how many edges the current node has and randomly moves it to one of them
+        if self.node.edge3 != -1:       # 3 edges
+            num = random.randrange(0,3)
+            if num == 0:
+                self.node = self.node.edge1
+            elif num == 1:
+                self.node = self.node.edge2
+            else:
+                self.node = self.node.edge3
+        else:
+            if random.randrange(0,2):
+                self.node = self.node.edge1
+            else:
+                self.node = self.node.edge2
+        
+        return
+
+    # moves the agent one step along the path
+    # returns 1 if successful, 0 if not
+    def followpath(self, path):
+        next = path.pop(0)
+
+        if next == self.node.edge1 or next == self.node.edge2 or next == self.node.edge3:
+            self.node = next
+            return 1
+        return 0
+
 def debugprintfull(graph, agent, target):
     for x in graph:
 
@@ -125,40 +155,8 @@ def debugprint(graph, agent, target):
         print("(AGENT HERE!!!)")
 
     print("")
-class agent():
-    def __init__(self, graph):
-        self.node = graph[random.randrange(0,40)]        # target is initialized/starts at random node
 
-    # randomly moves the target to a different neighboring node
-    def walk(self):
-        # finds how many edges the current node has and randomly moves it to one of them
-        if self.node.edge3 != -1:       # 3 edges
-            num = random.randrange(0,3)
-            if num == 0:
-                self.node = self.node.edge1
-            elif num == 1:
-                self.node = self.node.edge2
-            else:
-                self.node = self.node.edge3
-        else:
-            if random.randrange(0,2):
-                self.node = self.node.edge1
-            else:
-                self.node = self.node.edge2
-        
-        return
-
-    # moves the agent one step along the path
-    # returns 1 if successful, 0 if not
-    def followpath(self, path):
-        next = path.pop(0)
-
-        if next == self.node.edge1 or next == self.node.edge2 or next == self.node.edge3:
-            self.node = next
-            return 1
-        return 0
-
-# finds the shortest path from the agent's node (S) to the target's node (G)
+# finds the shortest path from the agent's node (S) to the target's node (G) using BFS
 def shortestpath(S, G):
     #starttime = time.clock_gettime(time.CLOCK_REALTIME)
     fringe = []
@@ -196,7 +194,7 @@ def checkvictory(agent,target):
         return 1
     return 0
 
-# runs agent 0 and returns the number of steps it took to achieve victory
+# sits at starting node and waits for target
 def agent0():
 
     steps = 0       # number of steps it's taken to reach the target
@@ -205,7 +203,8 @@ def agent0():
     newagent = agent(newgraph)
     newtarget = agent(newgraph)
 
-    while 1:    # loops until victory
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
         #debugprint(newgraph, newagent, newtarget)
         if checkvictory(newagent, newtarget):
             break
@@ -214,6 +213,7 @@ def agent0():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
+# moves toward target each step
 def agent1():
 
     steps = 0       # number of steps it's taken to reach the target
@@ -286,10 +286,7 @@ def main():
     # redirects print() to out.txt
     f = open('out.txt', 'w')
     sys.stdout = f
-
-    new = graph.construct()
-    debugprintfull(new, agent(new), agent(new))
     
-    #runagents(100)
+    runagents(1000)
 
 main()
