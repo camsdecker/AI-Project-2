@@ -73,6 +73,8 @@ class agent():
     # moves the agent one step along the path
     # returns 1 if successful, 0 if not
     def followpath(self, path):
+        if not path:
+            return 0
         next = path.pop(0)
 
         if next == self.node.edge1 or next == self.node.edge2 or next == self.node.edge3:
@@ -244,6 +246,47 @@ def agent1():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
+# same as agent 1, except it moves to the closest space that the target can move to next
+def agent2():
+
+    steps = 0       # number of steps it's taken to reach the target
+    
+    newgraph = graph.construct()
+    newagent = agent(newgraph)
+    newtarget = agent(newgraph)
+
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
+        
+        #debugprint(newgraph, newagent, newtarget)
+        #print("------------------------------------------")
+
+        newtarget.walk()
+
+        if checkvictory(newagent, newtarget):
+            break
+        
+        path = shortestpath(newagent.node, newtarget.node.edge1)
+
+        path2 = shortestpath(newagent.node, newtarget.node.edge2)
+        if len(path2) < len(path):
+            path = path2
+
+        if newtarget.node.edge3 != -1:
+            path3 = shortestpath(newagent.node, newtarget.node.edge3)
+            if len(path3) < len(path):
+                path = path3
+
+        newagent.followpath(path)
+        steps = steps + 1
+
+        if checkvictory(newagent, newtarget):
+            break
+        
+        
+    #debugprint(newgraph, newagent, newtarget)
+    return steps
+
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
     
@@ -268,6 +311,16 @@ def runagents(tries):
     avg = avg / tries
 
     printagent(1, tries, avg, starttime)
+
+    # AGENT 2
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent2()
+    avg = avg / tries
+
+    printagent(2, tries, avg, starttime)
 
     
 def printagent(agent, tries, avg, starttime):
