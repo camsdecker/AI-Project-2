@@ -197,6 +197,13 @@ def victory(agent,target):
         return 1
     return 0
 
+# examines a node, returning 1 if the target is at that node and 0 if not
+def examine(target, node):
+    if node == target.node:
+        return 1
+    else:
+         return 0
+
 # sits at starting node and waits for target
 def agent0():
 
@@ -291,6 +298,24 @@ def agent2():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
+def agent3():
+
+    steps = 0       # number of steps it's taken to reach the target
+    
+    newgraph = graph.construct()
+    newagent = agent(newgraph)
+    newtarget = agent(newgraph)
+
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
+        #debugprint(newgraph, newagent, newtarget)
+        if examine(newtarget, newgraph[0]):
+            break
+        newtarget.walk()
+        steps = steps + 1
+    #debugprint(newgraph, newagent, newtarget)
+    return steps
+
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
     
@@ -325,6 +350,16 @@ def runagents(tries):
     avg = avg / tries
 
     printagent(2, tries, avg, starttime)
+
+    # AGENT 3
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent3()
+    avg = avg / tries
+
+    printagent(3, tries, avg, starttime)
 
     
 def printagent(agent, tries, avg, starttime):
