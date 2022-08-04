@@ -56,6 +56,7 @@ class agent():
         # finds how many edges the current node has and randomly moves it to one of them
         if self.node.edge3 != -1:       # 3 edges
             num = random.randrange(0,3)
+            #print("NUM (3 edges:)", num)
             if num == 0:
                 self.node = self.node.edge1
             elif num == 1:
@@ -63,9 +64,11 @@ class agent():
             else:
                 self.node = self.node.edge3
         else:
-            if random.randrange(0,2):
+            num = random.randrange(0,2)
+            #print("NUM (2 edges:)", num)
+            if num == 0:
                 self.node = self.node.edge1
-            else:
+            elif num == 1:
                 self.node = self.node.edge2
         
         return
@@ -298,12 +301,13 @@ def agent2():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
+# examines node 0 at every step until target is at node
 def agent3():
 
     steps = 0       # number of steps it's taken to reach the target
     
     newgraph = graph.construct()
-    newagent = agent(newgraph)
+    #newagent = agent(newgraph)
     newtarget = agent(newgraph)
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
@@ -313,6 +317,104 @@ def agent3():
             break
         newtarget.walk()
         steps = steps + 1
+    #debugprint(newgraph, newagent, newtarget)
+    return steps
+
+# finds the highest probability that the target moves to node assuming that it's at one of node's neighbors
+# according to our transition model, as long as the target is at a neighbor of x (x') then the probability that
+# the target moves to x is 1 / # of neighbors of x', which will be 1/2 if any neighbor only has two edges (best case) or 1/3 if no neighbor has only two edges (worst case)
+def neighborsprob(node):
+    if node.edge1.edge3 == -1:
+        return 1.0 / 2.0
+    if node.edge2.edge3 == -1:
+        return 1.0 / 2.0
+    if node.edge2.edge3 == -1:
+        return 1.0 / 2.0
+    return 1.0/3.0
+
+# returns list of the node's neighbors
+def neighbors(node):
+    neighbors = []
+    neighbors.append(node.edge1)
+    neighbors.append(node.edge2)
+    if node.edge3 != -1:
+        neighbors.append(node.edge3)
+    return neighbors
+
+#Initial Distribution:
+#P(X0 = x) = 1 / total # of nodes
+#
+#Transition model:
+#P(Xt+1 = x | Xt = x' (where x' is not adjacent to x)) = 0
+#P(Xt+1 = x | Xt = x' (where x' is adjacent to x)) = 1 / # of neighbors of x'
+#
+#Observation model:
+#P(Yt = target not at x | Xt = x) = 0
+#P(Yt = target not at x | Xt = x') = 1
+
+# this function finds the highest possible probability that the target is at x at time t given our evidence y
+def v(evidence, graph, returnnodes):
+    t = len(evidence)   # t = current time step
+    if t == 0:  # P(X0 = x) = 1 / total # of nodes
+        return 1.0 / 40.0
+    
+    y = evidence.pop(0) # gives us Yt, AKA our observation at time t
+    highestprob = 0    # highest probability that target is in node
+    nodes = []   # list of nodes with highest probability of containing target
+
+    for x in graph:
+        #print(x)
+        if y == x:  # if x == y, that means that we know for sure that the target wasn't at node x at this time step
+            highestprob = 0
+            continue
+        currentprob = v(evidence, neighbors(x), 0) * neighborsprob(x)     # viterbi's algorithm
+        #print(currentprob)
+        if currentprob == highestprob:
+            nodes.append(x)
+        elif currentprob > highestprob:
+            nodes = []
+            nodes.append(x)
+            highestprob = currentprob
+    if returnnodes == 0:
+        return highestprob
+    else:
+        return nodes
+
+def chooserandom(nodes):
+    index = random.randrange(0, len(nodes))
+    return nodes[index]
+
+# uses Viterbi's algorithm to find the most likely
+def agent4():
+
+    steps = 0       # number of steps it's taken to reach the target
+    
+    newgraph = graph.construct()
+    #newagent = agent(newgraph)
+    newtarget = agent(newgraph)
+
+    evidence = []   # list containing each observation (Yt)
+    curr = chooserandom(newgraph)
+
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
+
+        #debugprintfull(newgraph, newtarget, newtarget)
+
+        #print("-----------Examining", curr.num)
+
+        #debugprint(newgraph, newtarget, newtarget)
+        
+        if examine(newtarget, curr):  # breaks if we found the node (victory), else adds the node to the list of observations
+            break
+        else:
+            evidence.insert(0, curr)
+        newtarget.walk()
+        steps = steps + 1
+
+        copiedevidence = copy.deepcopy(evidence)
+        nodes = v(copiedevidence, newgraph, 1)
+        curr = chooserandom(nodes)
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
@@ -361,6 +463,16 @@ def runagents(tries):
 
     printagent(3, tries, avg, starttime)
 
+    # AGENT 4
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent4()
+    avg = avg / tries
+
+    printagent(4, tries, avg, starttime)
+
     
 def printagent(agent, tries, avg, starttime):
     
@@ -375,10 +487,17 @@ def printagent(agent, tries, avg, starttime):
 
 def main():
 
+    #newgraph = graph.construct()
+    #evidence = [newgraph[0], newgraph[20], newgraph[36]]
+    #nodes = v(evidence, newgraph, 1)
+    #print(nodes)
     # redirects print() to out.txt
+    
     f = open('out.txt', 'w')
     sys.stdout = f
     
-    runagents(10000)
+    #agent4()
+
+    runagents(1000)
 
 main()
