@@ -10,6 +10,7 @@ class node(object):
         self.edge1 = -1
         self.edge2 = -1
         self.edge3 = -1
+        self.prob = 1.0 / 40.0
 class graph():
 
     # constructs a playing field for the agents and target
@@ -89,7 +90,8 @@ def debugprintfull(graph, agent, target):
     for x in graph:
 
         print("Node:", x.num)
-
+        print("Probability:", x.prob)
+        
         if x.edge1 != -1:
             print("Edge 1:", x.edge1.num)
         else:
@@ -116,6 +118,7 @@ def debugprint(graph, agent, target):
     x = agent.node
 
     print("Node:", x.num)
+    print("Probability:", x.prob)
 
     if x.edge1 != -1:
         print("Edge 1:", x.edge1.num)
@@ -140,6 +143,7 @@ def debugprint(graph, agent, target):
     x = target.node
 
     print("Node:", x.num)
+    print("Probability:", x.prob)
 
     if x.edge1 != -1:
         print("Edge 1:", x.edge1.num)
@@ -320,18 +324,6 @@ def agent3():
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
-# finds the highest probability that the target moves to node assuming that it's at one of node's neighbors
-# according to our transition model, as long as the target is at a neighbor of x (x') then the probability that
-# the target moves to x is 1 / # of neighbors of x', which will be 1/2 if any neighbor only has two edges (best case) or 1/3 if no neighbor has only two edges (worst case)
-def neighborsprob(node):
-    if node.edge1.edge3 == -1:
-        return 1.0 / 2.0
-    if node.edge2.edge3 == -1:
-        return 1.0 / 2.0
-    if node.edge2.edge3 == -1:
-        return 1.0 / 2.0
-    return 1.0/3.0
-
 # returns list of the node's neighbors
 def neighbors(node):
     neighbors = []
@@ -340,6 +332,26 @@ def neighbors(node):
     if node.edge3 != -1:
         neighbors.append(node.edge3)
     return neighbors
+
+def chooserandom(nodes):
+    index = random.randrange(0, len(nodes))
+    return nodes[index]
+
+# compiles a list of nodes with the nodes most likely to contain the target, then returns a random node from among them
+def mostlikely(graph):
+    nodes = []
+    highest = 0
+    for x in graph:
+        if x.prob == 0:
+            continue
+
+        if x.prob == highest:
+            nodes.append(x)
+        elif x.prob > highest:
+            highest = x.prob
+            nodes = []
+            nodes.append(x)
+    return chooserandom(nodes)
 
 #Initial Distribution:
 #P(X0 = x) = 1 / total # of nodes
@@ -352,72 +364,48 @@ def neighbors(node):
 #P(Yt = target not at x | Xt = x) = 0
 #P(Yt = target not at x | Xt = x') = 1
 
-# this function finds the highest possible probability that the target is at x at time t given our evidence y
-def v(evidence, graph, returnnodes):
-    t = len(evidence)   # t = current time step
-    if t == 0:  # P(X0 = x) = 1 / total # of nodes
-        return 1.0 / 40.0
-    
-    y = evidence.pop(0) # gives us Yt, AKA our observation at time t
-    highestprob = 0    # highest probability that target is in node
-    nodes = []   # list of nodes with highest probability of containing target
-
+# x is a node that we want to get calculate the chance of containing the target
+# observation represents the last node that we've observed and know doesn't contain the target
+def belief(graph):
     for x in graph:
-        #print(x)
-        if y == x:  # if x == y, that means that we know for sure that the target wasn't at node x at this time step
-            highestprob = 0
-            continue
-        currentprob = v(evidence, neighbors(x), 0) * neighborsprob(x)     # viterbi's algorithm
-        #print(currentprob)
-        if currentprob == highestprob:
-            nodes.append(x)
-        elif currentprob > highestprob:
-            nodes = []
-            nodes.append(x)
-            highestprob = currentprob
-    if returnnodes == 0:
-        return highestprob
-    else:
-        return nodes
+        prob = 0
 
-def chooserandom(nodes):
-    index = random.randrange(0, len(nodes))
-    return nodes[index]
+        for xprime in neighbors(x):     # we'll only evaluate neighbors of x, since it'll be 0 otherwise
+            prob += xprime.prob * (1.0 / len(neighbors(xprime)))
 
-# uses Viterbi's algorithm to find the most likely
+        x.prob = prob
+    return
+
+# uses filtering to find the node most likely to contain the target
 def agent4():
-
     steps = 0       # number of steps it's taken to reach the target
     
     newgraph = graph.construct()
     #newagent = agent(newgraph)
     newtarget = agent(newgraph)
-
-    evidence = []   # list containing each observation (Yt)
-    curr = chooserandom(newgraph)
+    curr = mostlikely(newgraph)
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
 
+        #print("Current =", curr.num, "(prob =", curr.prob,")")
         #debugprintfull(newgraph, newtarget, newtarget)
 
         #print("-----------Examining", curr.num)
 
         #debugprint(newgraph, newtarget, newtarget)
-        
-        if examine(newtarget, curr):  # breaks if we found the node (victory), else adds the node to the list of observations
+
+        belief(newgraph)
+        curr = mostlikely(newgraph)
+        if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
             break
         else:
-            evidence.insert(0, curr)
+            curr.prob = 0
         newtarget.walk()
         steps = steps + 1
 
-        copiedevidence = copy.deepcopy(evidence)
-        nodes = v(copiedevidence, newgraph, 1)
-        curr = chooserandom(nodes)
     #debugprint(newgraph, newagent, newtarget)
     return steps
-
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
     
@@ -498,6 +486,6 @@ def main():
     
     #agent4()
 
-    runagents(1000)
+    runagents(10000)
 
 main()
