@@ -333,14 +333,15 @@ def neighbors(node):
         neighbors.append(node.edge3)
     return neighbors
 
+# chooses a random node from a list of nodes
 def chooserandom(nodes):
     index = random.randrange(0, len(nodes))
     return nodes[index]
 
 # compiles a list of nodes with the nodes most likely to contain the target, then returns a random node from among them
 def mostlikely(graph):
-    nodes = []
-    highest = 0
+    nodes = []  # list containing highest probability nodes
+    highest = 0     # highest probability
     for x in graph:
         if x.prob == 0:
             continue
@@ -371,7 +372,7 @@ def belief(graph):
         prob = 0
 
         for xprime in neighbors(x):     # we'll only evaluate neighbors of x, since it'll be 0 otherwise
-            prob += xprime.prob * (1.0 / len(neighbors(xprime)))
+            prob += xprime.prob * (1.0 / len(neighbors(xprime)))    # Belief(x)
 
         x.prob = prob
     return
@@ -379,33 +380,56 @@ def belief(graph):
 # uses filtering to find the node most likely to contain the target
 def agent4():
     steps = 0       # number of steps it's taken to reach the target
-    
     newgraph = graph.construct()
-    #newagent = agent(newgraph)
     newtarget = agent(newgraph)
     curr = mostlikely(newgraph)
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
 
-        #print("Current =", curr.num, "(prob =", curr.prob,")")
-        #debugprintfull(newgraph, newtarget, newtarget)
-
-        #print("-----------Examining", curr.num)
-
-        #debugprint(newgraph, newtarget, newtarget)
-
-        belief(newgraph)
-        curr = mostlikely(newgraph)
+        # agent's turn
+        curr = mostlikely(newgraph)     # examines most probable node
         if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
             break
         else:
             curr.prob = 0
+        belief(newgraph)    # updates probabilities of every node
+
+        # target's turn
         newtarget.walk()
         steps = steps + 1
 
-    #debugprint(newgraph, newagent, newtarget)
     return steps
+
+def agent5():   #FIXME
+    return 999
+
+def agent6():   # FIXME
+    steps = 0       # number of steps it's taken to reach the target
+    newgraph = graph.construct()
+    newtarget = agent(newgraph)
+    curr = mostlikely(newgraph)
+
+    # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
+    while steps < 999:
+
+        # agent's turn
+        curr = mostlikely(newgraph)     # examines most probable node
+        if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
+            break
+        else:
+            curr.prob = 0
+        belief(newgraph)    # updates probabilities of every node
+
+        # target's turn
+        newtarget.walk()
+        steps = steps + 1
+
+    return steps
+
+def agent7():   #FIXME
+    return 999
+
 # runs each agent and averages the number of steps it took to reach victory with a sample size of tries
 def runagents(tries):
     
@@ -461,6 +485,36 @@ def runagents(tries):
 
     printagent(4, tries, avg, starttime)
 
+    # AGENT 5
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent5()
+    avg = avg / tries
+
+    printagent(5, tries, avg, starttime)
+
+    # AGENT 6
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent6()
+    avg = avg / tries
+
+    printagent(6, tries, avg, starttime)
+
+    # AGENT 7
+    avg = 0     # the average number of steps taken for each agent
+    
+    starttime = time.clock_gettime(time.CLOCK_REALTIME)
+    for i in range(tries):
+        avg = avg + agent7()
+    avg = avg / tries
+
+    printagent(7, tries, avg, starttime)
+
     
 def printagent(agent, tries, avg, starttime):
     
@@ -475,17 +529,9 @@ def printagent(agent, tries, avg, starttime):
 
 def main():
 
-    #newgraph = graph.construct()
-    #evidence = [newgraph[0], newgraph[20], newgraph[36]]
-    #nodes = v(evidence, newgraph, 1)
-    #print(nodes)
-    # redirects print() to out.txt
-    
     f = open('out.txt', 'w')
     sys.stdout = f
     
-    #agent4()
-
     runagents(10000)
 
 main()
