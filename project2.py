@@ -658,13 +658,13 @@ def printagent(agent, tries, avg, starttime):
     print(avg, "steps on average")
     #print("Total time:", timetaken, "seconds")
     print("Average time:", timetaken/tries, "seconds/iteration")
-    print("")
+    #print("")
 
 def main():
 
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    runagents(10000)
+    runagents(100)
 
 main()
