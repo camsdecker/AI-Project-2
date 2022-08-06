@@ -506,6 +506,28 @@ def agent6():
 
     return steps
 
+# returns a path to the closest node with the highest probability
+def closestpath(graph, agent):
+    nodes = []  # list containing highest probability nodes
+    highest = 0     # highest probability
+    for x in graph:
+        if x.prob == 0:
+            continue
+
+        if x.prob == highest:
+            nodes.append(x)
+        elif x.prob > highest:
+            highest = x.prob
+            nodes = []
+            nodes.append(x)
+
+    bestpath = []
+    for x in nodes:
+        path = shortestpath(agent.node, x)
+        if len(path) > len(bestpath):
+            bestpath = path
+    return bestpath
+
 # like agent 6, except it chooses the node with highest probability that is closest to the agent
 def agent7():   #FIXME
     steps = 0       # number of steps it's taken to reach the target
@@ -516,7 +538,6 @@ def agent7():   #FIXME
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
-
         # agent's turn
         curr = mostlikely(newgraph)     # examines most probable node
         if curr == newtarget.node:  # updates probability of examined node containing target
@@ -525,7 +546,7 @@ def agent7():   #FIXME
             curr.prob = 0
         belief(newgraph)    # updates belief state
 
-        path = shortestpath(newagent.node, mostlikely(newgraph))    # finds shortest path to new highest probability node
+        path = closestpath(newgraph, newagent)    # finds shortest path to new highest probability node
         newagent.followpath(path)
 
         if victory(newagent, newtarget):
@@ -638,8 +659,6 @@ def main():
 
     f = open('out.txt', 'w')
     sys.stdout = f
-    
-    #agent4()
 
     runagents(10000)
 
