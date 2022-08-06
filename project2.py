@@ -86,6 +86,7 @@ class agent():
             return 1
         return 0
 
+# prints all of the nodes and locations of the agent and target
 def debugprintfull(graph, agent, target):
     for x in graph:
 
@@ -112,6 +113,7 @@ def debugprintfull(graph, agent, target):
 
         print("")
 
+# prints out the nodes containing the target and agent
 def debugprint(graph, agent, target):
     #for x in graph:
 
@@ -197,6 +199,7 @@ def shortestpath(S, G):
     #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (fail)")
     return 0
 
+# dfs search from node S to node G
 def findpath(S, G):
     #starttime = time.clock_gettime(time.CLOCK_REALTIME)
     fringe = []
@@ -452,7 +455,8 @@ def agent4():
 
     return steps
 
-def agent5():   #FIXME
+# like agent 4, except it chooses to 
+def agent5():
     steps = 0       # number of steps it's taken to reach the target
     newgraph = graph.construct()
     newtarget = agent(newgraph)
@@ -507,7 +511,7 @@ def agent6():
     return steps
 
 # returns a path to the closest node with the highest probability
-def closestpath(graph, agent):
+def bestpath(graph, agent):
     nodes = []  # list containing highest probability nodes
     highest = 0     # highest probability
     for x in graph:
@@ -538,15 +542,16 @@ def agent7():   #FIXME
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
+
         # agent's turn
-        curr = mostlikely(newgraph)     # examines most probable node
+        curr = secondmostlikely(newgraph)     # examines most probable node
         if curr == newtarget.node:  # updates probability of examined node containing target
             curr.prob = 1
         else:
             curr.prob = 0
         belief(newgraph)    # updates belief state
 
-        path = closestpath(newgraph, newagent)    # finds shortest path to new highest probability node
+        path = shortestpath(newagent.node, secondmostlikely(newgraph))    # finds shortest path to new highest probability node
         newagent.followpath(path)
 
         if victory(newagent, newtarget):
@@ -643,7 +648,7 @@ def runagents(tries):
 
     printagent(7, tries, avg, starttime)
 
-    
+# prints data about the agent out
 def printagent(agent, tries, avg, starttime):
     
     timetaken = time.clock_gettime(time.CLOCK_REALTIME) - starttime
