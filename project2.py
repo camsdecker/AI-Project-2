@@ -316,12 +316,14 @@ def agent3():
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
-        #debugprint(newgraph, newagent, newtarget)
+        # agent's turn
         if examine(newtarget, newgraph[0]):
             break
+
+        # targets turn
         newtarget.walk()
         steps = steps + 1
-    #debugprint(newgraph, newagent, newtarget)
+
     return steps
 
 # returns list of the node's neighbors
@@ -407,6 +409,7 @@ def agent5():   #FIXME
 def agent6():   # FIXME
     steps = 0       # number of steps it's taken to reach the target
     newgraph = graph.construct()
+    newagent = agent(newgraph)
     newtarget = agent(newgraph)
     curr = mostlikely(newgraph)
 
@@ -415,15 +418,26 @@ def agent6():   # FIXME
 
         # agent's turn
         curr = mostlikely(newgraph)     # examines most probable node
-        if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
-            break
+        if curr == newtarget.node:  # updates probability of examined node containing target
+            curr.prob = 1
         else:
             curr.prob = 0
         belief(newgraph)    # updates probabilities of every node
 
+        path = shortestpath(newagent.node, mostlikely(newgraph))
+        newagent.followpath(path)
+
+        if victory(newagent, newtarget):
+            break
+
         # target's turn
         newtarget.walk()
         steps = steps + 1
+        
+        # i didn't check for victory again at this point because the assignment says the target is captured
+        # "if the agent enters the targets node" and not "if the target enters the agents node"
+        #if victory(newagent, newtarget):
+        #    break
 
     return steps
 
