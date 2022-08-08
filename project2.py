@@ -503,7 +503,7 @@ def bestpath(graph, agent):
     return bestpath
 
 # like agent 6, except it chooses the node with highest probability that is closest to the agent
-def agent7():   #FIXME
+def agent7():
     steps = 0       # number of steps it's taken to reach the target
     newgraph = graph.construct()
     newagent = agent(newgraph)
