@@ -1,9 +1,9 @@
+# AI Project 2
+# Written by Cameron Decker
+
 import sys
 import random
-import math
 import time
-import copy
-import numpy
 class node(object):
     def __init__(self):
         self.num = -1
