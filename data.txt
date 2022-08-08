@@ -1,0 +1,33 @@
+Iterations: 100000
+
+Agent 0
+102.12643 steps on average
+Average time: 9.23864245414734e-05 seconds/iteration
+
+Agent 1
+102.19107 steps on average
+Average time: 0.0002078941822052002 seconds/iteration
+
+Agent 2
+5.38852 steps on average
+Average time: 9.791465282440186e-05 seconds/iteration
+
+Agent 3
+100.92283 steps on average
+Average time: 9.864802598953247e-05 seconds/iteration
+
+Agent 4
+32.95782 steps on average
+Average time: 0.0013179342031478883 seconds/iteration
+
+Agent 5
+31.64331 steps on average
+Average time: 0.0014018329524993897 seconds/iteration
+
+Agent 6
+42.63643 steps on average
+Average time: 0.002449549789428711 seconds/iteration
+
+Agent 7
+35.68441 steps on average
+Average time: 0.002414441130161285 seconds/iteration

@@ -199,38 +199,21 @@ def shortestpath(S, G):
     #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (fail)")
     return 0
 
-# dfs search from node S to node G
+# performs a BFS on each of S's adjacent nodes and randomly picks from the ones with the shortest distance
 def findpath(S, G):
-    #starttime = time.clock_gettime(time.CLOCK_REALTIME)
-    fringe = []
-    closed = []
-    fringe.append([S])
-    while len(fringe) > 0:
-        path = fringe.pop(0)
-        current = path[-1]
-        if current in closed:
-            continue
-        if current == G:
-            #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (success)")
-            path.pop(0)
-            return path
-        else:
-            newpath = list(path)
-            newpath.insert(0,current.edge1)
-            fringe.append(newpath)
-            if current.edge2 != -1:
-                newpath = list(path)
-                newpath.insert(0,current.edge2)
-                fringe.append(newpath)
-                if current.edge3 != -1:
-                    newpath = list(path)
-                    newpath.insert(0,current.edge3)
-                    fringe.append(newpath)
-            
-            closed.append(current)
-    #print("Search completed in", time.clock_gettime(time.CLOCK_REALTIME) - starttime, "seconds (fail)")
-    return 0
-
+    best = []   # list of the shortest paths
+    for adjnode in neighbors(S):
+        path = shortestpath(adjnode, G)
+        path.append(adjnode)
+        if len(best) == 0:          # puts first path into list if it's empty
+            best.append(path)
+        elif len(path) < len(best[0]):  # resets the list if it finds a shorter path
+            best = []
+            best.append(path)
+        elif len(path) == len(best[0]): # adds the path to the list if it's the same length
+            best.append(path)
+    return chooserandom(best)
+    
 # checks if the agent is in the same node as the target and returns 1 if victorious and 0 if not
 # maybe unnecessary but makes the code easier to read imo
 def victory(agent,target):
@@ -239,11 +222,14 @@ def victory(agent,target):
     return 0
 
 # examines a node, returning 1 if the target is at that node and 0 if not
+# also sets the node's probability
 def examine(target, node):
     if node == target.node:
+        node.prob = 1
         return 1
     else:
-         return 0
+        node.prob = 0
+        return 0
 
 # sits at starting node and waits for target
 def agent0():
@@ -276,41 +262,30 @@ def agent1():
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
         
-        #debugprint(newgraph, newagent, newtarget)
-        #print("------------------------------------------")
-
-        #newtarget.walk()
-
+        # agent's turn
         path = findpath(newagent.node, newtarget.node)
         newagent.followpath(path)
         steps = steps + 1
 
         if victory(newagent, newtarget):
             break
-
-        newtarget.walk()
         
+        # target's turn
+        newtarget.walk()
         
     #debugprint(newgraph, newagent, newtarget)
     return steps
 
 # uses a BFS to find the shortest path to the target
-def agent2():   # FIXME
-
+def agent2():
     steps = 0       # number of steps it's taken to reach the target
-    
     newgraph = graph.construct()
     newagent = agent(newgraph)
     newtarget = agent(newgraph)
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
-        
-        #debugprint(newgraph, newagent, newtarget)
-        #print("------------------------------------------")
-
-        #newtarget.walk()
-
+        # agent's turn
         path = shortestpath(newagent.node, newtarget.node)
         newagent.followpath(path)
         steps = steps + 1
@@ -318,8 +293,8 @@ def agent2():   # FIXME
         if victory(newagent, newtarget):
             break
 
+        # target's turn
         newtarget.walk()
-        
         
     #debugprint(newgraph, newagent, newtarget)
     return steps
@@ -354,7 +329,7 @@ def neighbors(node):
         neighbors.append(node.edge3)
     return neighbors
 
-# chooses a random node from a list of nodes
+# chooses a random item from a list
 def chooserandom(nodes):
     index = random.randrange(0, len(nodes))
     return nodes[index]
@@ -393,7 +368,7 @@ def secondmostlikely(graph):
     nodes = []  # list containing second highest probability nodes
     highest = 0     # second highest probability
     for x in graph:
-        if x in exclude:    # ignore the nodes with highest probability
+        if x in exclude:    # ignore the nodes with the actual highest probability
             continue
         if x.prob == 0:
             continue
@@ -440,13 +415,12 @@ def agent4():
 
     # terminates after victory or 999 steps (arbitrary) to break out of potentially infinite loops
     while steps < 999:
-        #debugprintfull(newgraph, newtarget, newtarget)
+
         # agent's turn
         curr = mostlikely(newgraph)     # examines most probable node
-        if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
+        if examine(newtarget, curr):  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
             break
-        else:
-            curr.prob = 0
+
         belief(newgraph)    # updates probabilities of every node
 
         # target's turn
@@ -455,7 +429,7 @@ def agent4():
 
     return steps
 
-# like agent 4, except it chooses to 
+# like agent 4, except it chooses the second most likely node
 def agent5():
     steps = 0       # number of steps it's taken to reach the target
     newgraph = graph.construct()
@@ -467,10 +441,9 @@ def agent5():
         #debugprintfull(newgraph, newtarget, newtarget)
         # agent's turn
         curr = secondmostlikely(newgraph)     # examines most probable node
-        if curr == newtarget.node:  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
+        if examine(newtarget, curr):  # breaks if we found the node (victory), otherwise we assume the target is not at the observed node
             break
-        else:
-            curr.prob = 0
+
         belief(newgraph)    # updates probabilities of every node
 
         # target's turn
@@ -492,10 +465,7 @@ def agent6():
 
         # agent's turn
         curr = mostlikely(newgraph)     # examines most probable node
-        if curr == newtarget.node:  # updates probability of examined node containing target
-            curr.prob = 1
-        else:
-            curr.prob = 0
+        examine(newtarget, curr)    # examines curr
         belief(newgraph)    # updates belief state
 
         path = shortestpath(newagent.node, mostlikely(newgraph))    # finds shortest path to new highest probability node
@@ -545,10 +515,7 @@ def agent7():   #FIXME
 
         # agent's turn
         curr = secondmostlikely(newgraph)     # examines most probable node
-        if curr == newtarget.node:  # updates probability of examined node containing target
-            curr.prob = 1
-        else:
-            curr.prob = 0
+        examine(newtarget, curr)
         belief(newgraph)    # updates belief state
 
         path = shortestpath(newagent.node, secondmostlikely(newgraph))    # finds shortest path to new highest probability node
@@ -665,6 +632,6 @@ def main():
     f = open('out.txt', 'w')
     sys.stdout = f
 
-    runagents(100)
+    runagents(10000)
 
 main()
